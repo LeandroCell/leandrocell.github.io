@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Leandro Paolicelli — interaktives Terminal-Profil.">
+<title>leo@github ~ interactive terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="matrix-canvas"></canvas>
+
+<main class="wrap">
+  <div class="terminal" id="terminal">
+    <div class="titlebar">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+      <span>leo@github</span>
+    </div>
+
+    <div class="body" id="output" tabindex="-1">
+      <pre class="banner">██╗     ███████╗ ██████╗ 
+██║     ██╔════╝██╔═══██╗
+██║     █████╗  ██║   ██║
+██║     ██╔══╝  ██║   ██║
+███████╗███████╗╚██████╔╝
+╚══════╝╚══════╝ ╚═════╝ </pre>
+      <div class="line">Willkommen. Tippe <span class="cmd-hl">help</span> für eine Übersicht der Befehle.</div>
+      <div class="line dim">↑/↓ für Verlauf · Tab für Autovervollständigung</div>
+    </div>
+
+    <div class="input-row">
+      <span class="prompt">leo@github:~$</span>
+      <input id="cmd-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal-Eingabe">
+    </div>
+  </div>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
