@@ -7,37 +7,63 @@
 <title>leo@github ~ interactive terminal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <canvas id="matrix-canvas"></canvas>
 
 <main class="wrap">
+  <header class="header">
+    <h1 class="wordmark" id="wordmark">LEO</h1>
+    <p class="tagline" id="tagline"></p>
+  </header>
+
+  <section class="stats" id="stats">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-total">–</div>
+      <div class="stat-label">Contributions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-current">–</div>
+      <div class="stat-label">Day Streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-best">–</div>
+      <div class="stat-label">Day Best Streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-max">–</div>
+      <div class="stat-label">In One Day</div>
+    </div>
+  </section>
+
   <div class="terminal" id="terminal">
     <div class="titlebar">
       <div class="dot red"></div>
       <div class="dot yellow"></div>
       <div class="dot green"></div>
-      <span>leo@github</span>
+      <span>leo@github: ~</span>
     </div>
 
-    <div class="body" id="output" tabindex="-1">
-      <pre class="banner">██╗     ███████╗ ██████╗ 
-██║     ██╔════╝██╔═══██╗
-██║     █████╗  ██║   ██║
-██║     ██╔══╝  ██║   ██║
-███████╗███████╗╚██████╔╝
-╚══════╝╚══════╝ ╚═════╝ </pre>
-      <div class="line">Willkommen. Tippe <span class="cmd-hl">help</span> für eine Übersicht der Befehle.</div>
-      <div class="line dim">↑/↓ für Verlauf · Tab für Autovervollständigung</div>
-    </div>
+    <div class="body" id="output" tabindex="-1"></div>
 
     <div class="input-row">
       <span class="prompt">leo@github:~$</span>
       <input id="cmd-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal-Eingabe">
     </div>
   </div>
+
+  <div class="hints" id="hints">
+    <span class="hints-label">type <span class="chip" data-cmd="help">help</span> to see commands · try</span>
+    <span class="chip" data-cmd="contributions">contributions</span>
+    <span class="chip" data-cmd="projects">projects</span>
+    <span class="chip" data-cmd="matrix">matrix</span>
+  </div>
+
+  <nav class="links-row" id="links-row"></nav>
+
+  <p class="footnote">rendered client-side, no build step · data refreshes daily</p>
 </main>
 
 <script src="script.js"></script>

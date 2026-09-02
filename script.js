@@ -1,5 +1,7 @@
+// ---- Konfiguration: hier deine Angaben anpassen -----------------------
 const CONFIG = {
   githubUser: "LeandroCell",
+  wordmark: "LEO",
   name: "Leandro Paolicelli",
   role: "Informatik-Student · angehender Fachinformatiker Digitale Vernetzung (Mercedes-Benz, ab Sep 2027)",
   location: "Deutschland",
@@ -12,17 +14,7 @@ const CONFIG = {
 const output = document.getElementById("output");
 const input = document.getElementById("cmd-input");
 
-const COMMANDS = [
-  "help",
-  "about",
-  "whoami",
-  "projects",
-  "contributions",
-  "skills",
-  "contact",
-  "matrix",
-  "clear",
-];
+const COMMANDS = ["help", "about", "whoami", "projects", "contributions", "skills", "contact", "matrix", "clear"];
 
 let history = [];
 let historyIndex = -1;
@@ -53,59 +45,105 @@ function escapeHtml(str) {
   return d.innerHTML;
 }
 
-// ---- Befehle -------------------------------------------------------------
+// ---- Kopfbereich, Stats-Karten, Link-Zeile befüllen ------------------------
+
+function initHeader() {
+  document.getElementById("wordmark").textContent = CONFIG.wordmark;
+  document.getElementById("tagline").textContent = CONFIG.role;
+
+  const links = document.getElementById("links-row");
+  const entries = [
+    ["portfolio", CONFIG.portfolio],
+    ["github", `https://github.com/${CONFIG.githubUser}`],
+    ["email", `mailto:${CONFIG.email}`],
+  ];
+  links.innerHTML = entries
+    .map(([label, href]) => `<a href="${href}" target="_blank" rel="noopener">${label}</a>`)
+    .join("<span class=\"dim\">·</span>");
+}
+
+function printBoot() {
+  printLine(`<span class="ok">connected to github.com/${CONFIG.githubUser}</span>`);
+  printLine(`type <span class="cmd-hl">help</span> to see available commands`);
+}
+
+// ---- Contribution-Stats (Karten oben) --------------------------------------
+
+async function loadStats() {
+  try {
+    const res = await fetch(`https://github-contributions-api.jogruber.de/v4/${CONFIG.githubUser}`);
+    if (!res.ok) throw new Error("nicht erreichbar");
+    const data = await res.json();
+    const days = (data.contributions || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+
+    const total = Object.values(data.total || {}).reduce((sum, v) => sum + v, 0);
+    const { current, best, maxDay } = calcStreaks(days);
+
+    setStat("stat-total", total.toLocaleString("de-DE"));
+    setStat("stat-current", current);
+    setStat("stat-best", best);
+    setStat("stat-max", maxDay);
+  } catch (e) {
+    ["stat-total", "stat-current", "stat-best", "stat-max"].forEach(id => setStat(id, "–"));
+  }
+}
+
+function setStat(id, val) {
+  document.getElementById(id).textContent = val;
+}
+
+function calcStreaks(days) {
+  let run = 0, best = 0, maxDay = 0;
+  days.forEach(d => {
+    if (d.count > 0) { run++; best = Math.max(best, run); }
+    else { run = 0; }
+    maxDay = Math.max(maxDay, d.count);
+  });
+
+  let current = 0;
+  const today = new Date().toISOString().slice(0, 10);
+  for (let i = days.length - 1; i >= 0; i--) {
+    const d = days[i];
+    if (d.count > 0) { current++; }
+    else if (d.date === today) { continue; } // heutiger Tag zählt noch nicht als Abbruch
+    else { break; }
+  }
+  return { current, best, maxDay };
+}
+
+// ---- Befehle im Terminal ----------------------------------------------------
 
 const handlers = {
   help() {
     printLine("Verfügbare Befehle:");
-    printLine(
-      `&nbsp;&nbsp;<span class="cmd-hl">about</span>          kurze Vorstellung`,
-    );
-    printLine(
-      `&nbsp;&nbsp;<span class="cmd-hl">projects</span>       meine letzten GitHub-Repos (live)`,
-    );
-    printLine(
-      `&nbsp;&nbsp;<span class="cmd-hl">contributions</span>  Commit-Aktivität dieses Jahr (live)`,
-    );
-    printLine(
-      `&nbsp;&nbsp;<span class="cmd-hl">skills</span>         Technologien, mit denen ich arbeite`,
-    );
-    printLine(
-      `&nbsp;&nbsp;<span class="cmd-hl">contact</span>        wie du mich erreichst`,
-    );
+    printLine(`&nbsp;&nbsp;<span class="cmd-hl">about</span>          kurze Vorstellung`);
+    printLine(`&nbsp;&nbsp;<span class="cmd-hl">projects</span>       meine letzten GitHub-Repos (live)`);
+    printLine(`&nbsp;&nbsp;<span class="cmd-hl">contributions</span>  Commit-Aktivität dieses Jahr (live)`);
+    printLine(`&nbsp;&nbsp;<span class="cmd-hl">skills</span>         Technologien, mit denen ich arbeite`);
+    printLine(`&nbsp;&nbsp;<span class="cmd-hl">contact</span>        wie du mich erreichst`);
     printLine(`&nbsp;&nbsp;<span class="cmd-hl">matrix</span>         ✨`);
-    printLine(
-      `&nbsp;&nbsp;<span class="cmd-hl">clear</span>          Terminal leeren`,
-    );
+    printLine(`&nbsp;&nbsp;<span class="cmd-hl">clear</span>          Terminal leeren`);
   },
 
-  about() {
-    handlers.whoami();
-  },
+  about() { handlers.whoami(); },
   whoami() {
     printLine(`<strong>${CONFIG.name}</strong>`);
     printLine(CONFIG.role);
     printLine(`<span class="dim">${CONFIG.location}</span>`);
     printLine("");
-    printLine(
-      "Ich studiere Informatik und arbeite parallel an eigenen Projekten " +
-        "Richtung Full-Stack-Entwicklung und Netzwerktechnik.",
-    );
+    printLine("Ich studiere Informatik und arbeite parallel an eigenen Projekten " +
+               "Richtung Full-Stack-Entwicklung und Netzwerktechnik.");
   },
 
   skills() {
     printLine("Aktuell im Werkzeugkasten:");
-    CONFIG.skills.forEach((s) => printLine(`&nbsp;&nbsp;· ${s}`));
+    CONFIG.skills.forEach(s => printLine(`&nbsp;&nbsp;· ${s}`));
   },
 
   contact() {
     printLine(`E-Mail: <a href="mailto:${CONFIG.email}">${CONFIG.email}</a>`);
-    printLine(
-      `GitHub: <a href="https://github.com/${CONFIG.githubUser}" target="_blank" rel="noopener">github.com/${CONFIG.githubUser}</a>`,
-    );
-    printLine(
-      `Portfolio: <a href="${CONFIG.portfolio}" target="_blank" rel="noopener">${CONFIG.portfolio.replace("https://", "")}</a>`,
-    );
+    printLine(`GitHub: <a href="https://github.com/${CONFIG.githubUser}" target="_blank" rel="noopener">github.com/${CONFIG.githubUser}</a>`);
+    printLine(`Portfolio: <a href="${CONFIG.portfolio}" target="_blank" rel="noopener">${CONFIG.portfolio.replace("https://", "")}</a>`);
   },
 
   clear() {
@@ -115,19 +153,14 @@ const handlers = {
   async projects() {
     printLine('<span class="dim">lade Repositories …</span>');
     try {
-      const res = await fetch(
-        `https://api.github.com/users/${CONFIG.githubUser}/repos?sort=updated&per_page=6`,
-      );
+      const res = await fetch(`https://api.github.com/users/${CONFIG.githubUser}/repos?sort=updated&per_page=6`);
       if (!res.ok) throw new Error("API-Limit oder Netzwerkfehler");
       const repos = await res.json();
-      output.lastChild.remove(); // "lade..." Zeile entfernen
+      output.lastChild.remove();
 
-      if (!repos.length) {
-        printLine("Keine öffentlichen Repos gefunden.");
-        return;
-      }
+      if (!repos.length) { printLine("Keine öffentlichen Repos gefunden."); return; }
 
-      repos.forEach((r) => {
+      repos.forEach(r => {
         const div = document.createElement("div");
         div.className = "proj-card";
         div.innerHTML =
@@ -139,11 +172,8 @@ const handlers = {
       scrollToBottom();
     } catch (e) {
       output.lastChild.remove();
-      printLine(
-        "Repos konnten nicht geladen werden (GitHub-API-Limit erreicht?). " +
-          `Direkt hier: <a href="https://github.com/${CONFIG.githubUser}?tab=repositories" target="_blank" rel="noopener">github.com/${CONFIG.githubUser}</a>`,
-        "err",
-      );
+      printLine("Repos konnten nicht geladen werden (GitHub-API-Limit erreicht?). " +
+                 `Direkt hier: <a href="https://github.com/${CONFIG.githubUser}?tab=repositories" target="_blank" rel="noopener">github.com/${CONFIG.githubUser}</a>`, "err");
     }
   },
 
@@ -151,9 +181,7 @@ const handlers = {
     printLine('<span class="dim">lade Commit-Aktivität …</span>');
     try {
       const year = new Date().getFullYear();
-      const res = await fetch(
-        `https://github-contributions-api.jogruber.de/v4/${CONFIG.githubUser}?y=${year}`,
-      );
+      const res = await fetch(`https://github-contributions-api.jogruber.de/v4/${CONFIG.githubUser}?y=${year}`);
       if (!res.ok) throw new Error("nicht erreichbar");
       const data = await res.json();
       output.lastChild.remove();
@@ -162,7 +190,7 @@ const handlers = {
       const total = days.reduce((sum, d) => sum + d.count, 0);
       printLine(`${total} Contributions in ${year}.`);
 
-      const last84 = days.slice(-84); // letzte 12 Wochen
+      const last84 = days.slice(-84);
       const ramp = " ░▒▓█";
       let row = "";
       last84.forEach((d, i) => {
@@ -184,10 +212,8 @@ const handlers = {
 
   matrix() {
     toggleMatrix(true);
-    printLine(
-      '<span class="dim">Matrix-Modus an. Beliebige Taste zum Beenden.</span>',
-    );
-  },
+    printLine('<span class="dim">Matrix-Modus an. Beliebige Taste zum Beenden.</span>');
+  }
 };
 
 async function runCommand(raw) {
@@ -201,20 +227,14 @@ async function runCommand(raw) {
   if (handlers[cmd]) {
     await handlers[cmd]();
   } else {
-    printLine(
-      `command not found: ${escapeHtml(cmd)} — tippe <span class="cmd-hl">help</span>`,
-      "err",
-    );
+    printLine(`command not found: ${escapeHtml(cmd)} — tippe <span class="cmd-hl">help</span>`, "err");
   }
 }
 
 // ---- Eingabe: Enter, Verlauf, Tab-Autovervollständigung -------------------
 
 input.addEventListener("keydown", async (e) => {
-  if (matrixActive) {
-    toggleMatrix(false);
-    return;
-  }
+  if (matrixActive) { toggleMatrix(false); return; }
 
   if (e.key === "Enter") {
     const val = input.value;
@@ -222,10 +242,7 @@ input.addEventListener("keydown", async (e) => {
     await runCommand(val);
   } else if (e.key === "ArrowUp") {
     e.preventDefault();
-    if (historyIndex > 0) {
-      historyIndex--;
-      input.value = history[historyIndex];
-    }
+    if (historyIndex > 0) { historyIndex--; input.value = history[historyIndex]; }
   } else if (e.key === "ArrowDown") {
     e.preventDefault();
     if (historyIndex < history.length - 1) {
@@ -239,13 +256,25 @@ input.addEventListener("keydown", async (e) => {
     e.preventDefault();
     const partial = input.value.trim().toLowerCase();
     if (!partial) return;
-    const match = COMMANDS.find((c) => c.startsWith(partial));
+    const match = COMMANDS.find(c => c.startsWith(partial));
     if (match) input.value = match;
   }
 });
 
-document.addEventListener("click", () => input.focus());
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".chip")) input.focus();
+});
 window.addEventListener("load", () => input.focus());
+
+// Klickbare Quick-Command-Chips
+document.querySelectorAll(".chip").forEach(chip => {
+  chip.addEventListener("click", async () => {
+    const cmd = chip.dataset.cmd;
+    if (!cmd) return;
+    await runCommand(cmd);
+    input.focus();
+  });
+});
 
 // ---- Matrix-Easter-Egg -----------------------------------------------------
 
@@ -257,11 +286,7 @@ let matrixTimer = null;
 function toggleMatrix(on) {
   matrixActive = on;
   canvas.classList.toggle("active", on);
-  if (on) {
-    startMatrix();
-  } else {
-    clearInterval(matrixTimer);
-  }
+  if (on) { startMatrix(); } else { clearInterval(matrixTimer); }
 }
 
 function startMatrix() {
@@ -274,9 +299,9 @@ function startMatrix() {
 
   clearInterval(matrixTimer);
   matrixTimer = setInterval(() => {
-    ctx.fillStyle = "rgba(11, 14, 20, 0.08)";
+    ctx.fillStyle = "rgba(10, 12, 10, 0.08)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#ffb454";
+    ctx.fillStyle = "#4ade80";
     ctx.font = fontSize + "px monospace";
     drops.forEach((y, i) => {
       const char = chars[Math.floor(Math.random() * chars.length)];
@@ -288,8 +313,11 @@ function startMatrix() {
 }
 
 window.addEventListener("resize", () => {
-  if (matrixActive) {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
+  if (matrixActive) { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
 });
+
+// ---- Start -------------------------------------------------------------
+
+initHeader();
+printBoot();
+loadStats();
