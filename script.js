@@ -74,7 +74,10 @@ async function loadStats() {
     const res = await fetch(`https://github-contributions-api.jogruber.de/v4/${CONFIG.githubUser}`);
     if (!res.ok) throw new Error("nicht erreichbar");
     const data = await res.json();
-    const days = (data.contributions || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const days = (data.contributions || [])
+      .filter(d => d.date <= todayStr) // Platzhalter-Tage der laufenden Woche rauswerfen
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     const total = Object.values(data.total || {}).reduce((sum, v) => sum + v, 0);
     const { current, best, maxDay } = calcStreaks(days);
